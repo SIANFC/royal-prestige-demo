@@ -386,36 +386,61 @@ function OwnerPanel({ profile, onLogout }) {
     return `${window.location.origin}/rifa?ref=${encodeURIComponent(token)}`;
   };
 
+  const copyCardUrl = async (card, event) => {
+    if (!card?.token) return;
+
+    const url = getPublicCardUrl(card.token);
+
+    if (!url) return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedCardId(card.card_id);
+
+      if (event?.currentTarget) {
+        event.currentTarget.blur();
+      }
+
+      window.setTimeout(() => {
+        setCopiedCardId((current) =>
+          current === card.card_id ? null : current
+        );
+      }, 1800);
+    } catch (error) {
+      console.error("ERROR AL COPIAR URL:", error);
+    }
+  };
+
   const downloadCardQrSvg = (card) => {
-  const qrSvg = document.querySelector(".owner-card-qr-preview svg");
+    const qrSvg = document.querySelector(".owner-card-qr-preview svg");
 
-  if (!qrSvg || !card?.token) return;
+    if (!qrSvg || !card?.token) return;
 
-  const clonedSvg = qrSvg.cloneNode(true);
+    const clonedSvg = qrSvg.cloneNode(true);
 
-  clonedSvg.setAttribute("width", "30mm");
-  clonedSvg.setAttribute("height", "30mm");
+    clonedSvg.setAttribute("width", "30mm");
+    clonedSvg.setAttribute("height", "30mm");
 
-  const serializer = new XMLSerializer();
-  const svgContent = serializer.serializeToString(clonedSvg);
+    const serializer = new XMLSerializer();
+    const svgContent = serializer.serializeToString(clonedSvg);
 
-  const blob = new Blob(
-    [svgContent],
-    { type: "image/svg+xml;charset=utf-8" }
-  );
+    const blob = new Blob(
+      [svgContent],
+      { type: "image/svg+xml;charset=utf-8" }
+    );
 
-  const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${card.label || "tarjeta"}-${card.token}-QR.svg`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${card.label || "tarjeta"}-${card.token}-QR.svg`;
 
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-  URL.revokeObjectURL(url);
-};
+    URL.revokeObjectURL(url);
+  };
 
   const openCardQr = (card) => {
     setCopiedCardId(null);
